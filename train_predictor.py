@@ -40,31 +40,32 @@ class MaskPredDataset(torch.utils.data.Dataset):
         self.data_path = os.path.join(data_root, split)
         self.split = split
 
-        all_videos = os.listdir(self.data_path)
+        all_videos = [os.path.join(self.data_path, name) for name in os.listdir(self.data_path) if os.path.isdir(os.path.join(self.data_path, name))]
         all_videos.sort(key= lambda x: int(x.split('/')[-1].split('.')[0].split('_')[-1]))
-        self.all_videos = all_videos
 
-        # all_masks = []
-        # for video in tqdm.tqdm(all_videos, postfix="Loading masks for split {}".format(split)):
-        #     mask_path = os.path.join(self.data_path, video, "mask.pt")
-        #     mask = torch.load(mask_path)
-        #     all_masks.append(mask.float())
-        # self.all_masks = all_masks
+        if split == "train":
+            all_videos_unlabeled = [
+                os.path.join(data_root, "unlabeled", name) for name in 
+                os.listdir(os.path.join(data_root, "unlabeled")) if os.path.isdir(os.path.join(data_root, "unlabeled", name))
+            ]
+            all_videos_unlabeled.sort(key= lambda x: int(x.split('/')[-1].split('.')[0].split('_')[-1]))
+            all_videos += all_videos_unlabeled
+
+        self.all_videos = all_videos
 
     def __len__(self):
         return len(self.all_videos)
 
     def __getitem__(self, idx):
-        mask_path = os.path.join(self.data_path, self.all_videos[idx], "mask.pt")
+        mask_path = os.path.join(self.all_videos[idx], "mask.pt")
         mask = torch.load(mask_path)
-        return mask.float()
-        # return self.all_masks[idx]
-
+        return mask
 
 # In[4]:
 
 print("Loading datasets..")
 train_set = MaskPredDataset("data_prepared", "train") # MemMapDataset("data_prepared", "train", length=1000)
+print("INFO: Train set has", len(train_set))
 val_set = MaskPredDataset("data_prepared", "val")
 
 
@@ -151,7 +152,7 @@ class SampleVideoCallback(pl.pytorch.callbacks.Callback):
 
 logger = WandbLogger(project="mask-predformer")
 sample_video_cb = SampleVideoCallback(val_set)
-trainer = pl.Trainer(max_epochs=1, logger=logger, callbacks=[sample_video_cb], profiler="simple")
+trainer = pl.Trainer(max_epochs=50, accelerator="gpu", devices=1, precision="16-mixed", logger=logger, callbacks=[sample_video_cb])
 
 
 # In[12]:
@@ -159,7 +160,7 @@ trainer = pl.Trainer(max_epochs=1, logger=logger, callbacks=[sample_video_cb], p
 
 trainer.fit(
     MaskPredFormer(predictor), 
-    torch.utils.data.DataLoader(train_set, batch_size=4, num_workers=4),
+    torch.utils.data.DataLoader(train_set, batch_size=2, num_workers=4),
     torch.utils.data.DataLoader(val_set, batch_size=1, num_workers=4),
 )
 
