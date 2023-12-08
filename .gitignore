@@ -1,2 +1,11 @@
 data/
 models/
+.ipynb_checkpoints/
+data_prepared
+mask-predformer/
+wandb/
+__pycache__/
+# FILES
+*.npy
+*.pt
+*.pth
