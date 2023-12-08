@@ -56,7 +56,7 @@ class MaskPredDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         mask_path = os.path.join(self.data_path, self.all_videos[idx], "mask.pt")
-        mask = torch.load(mask_path)g
+        mask = torch.load(mask_path)
         return mask.float()
         # return self.all_masks[idx]
 
