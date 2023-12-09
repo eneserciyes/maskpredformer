@@ -57,20 +57,28 @@ class decoder_block(nn.Module):
     
 class Predictor(nn.Module):
     def __init__(self, 
-                in_channels=49, 
+                embed_dim=32, 
                 channels=[64, 128, 256], 
                 bottleneck_dim=256,
                 nhead=8,
                 transformer_num_layers=6,
+                block_size=11,
+                out_channels=49
         ):
         super(Predictor, self).__init__()
-        self.in_channels = in_channels
+        self.embed_dim = embed_dim
         self.bottleneck_dim = bottleneck_dim
         self.channels = channels
+        self.block_size = block_size
+
+        """ Embeddings """
+        self.token_embeddings = nn.Embedding(49, embed_dim)
+        self.position_embeddings = nn.Embedding(block_size, bottleneck_dim)
 
         """ Transformer Encoder """
         self.transformer_encoder = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(d_model=bottleneck_dim, nhead=nhead, batch_first=True), 
+            nn.TransformerEncoderLayer(d_model=bottleneck_dim, 
+                                       nhead=nhead, batch_first=True), 
             num_layers=transformer_num_layers
         )
 
@@ -78,9 +86,11 @@ class Predictor(nn.Module):
         self.up_proj = nn.Linear(bottleneck_dim, bottleneck_dim*10*15)
         
         """ Encoder """
-        self.encoder_blocks = nn.ModuleList([encoder_block(in_channels, channels[0])] + [
-            encoder_block(channels[i], channels[i+1]) for i in range(len(channels)-1)
-        ])
+        self.encoder_blocks = nn.ModuleList(
+            [encoder_block(embed_dim, channels[0])] + [
+                encoder_block(channels[i], channels[i+1]) for i in range(len(channels)-1)
+            ]
+        )
 
         """ Bottleneck """
         self.b = conv_block(channels[-1], bottleneck_dim)
@@ -92,13 +102,19 @@ class Predictor(nn.Module):
         ])
 
         """ Output """
-        self.out = nn.Conv2d(channels[0], in_channels, kernel_size=1, padding=0)
+        self.out = nn.Conv2d(channels[0], out_channels, kernel_size=1, padding=0)
 
     def forward(self, inputs):
+        """ Embed input labels """
+        embeds = self.token_embeddings(inputs) # (b, t, h, w) -> (b, t, h, w, embed_dim)
+        embeds = embeds.permute(0, 1, 4, 2, 3) # (b, t, h, w, embed_dim) -> (b, embed_dim, t, h, w)
+
+        b, t, c, h, w = embeds.shape
+        x = embeds.contiguous().view(b*t, c, h, w) # (b, t, c, h, w) -> (b*t, c, h, w)
+
         """ Encoder """
-        encoder_features = []
-        b, t, c, h, w = inputs.shape
-        x = inputs.contiguous().view(b*t, c, h, w) # (b, t, c, h, w) -> (b*t, c, h, w)
+        encoder_features = []        
+
         for encoder_block in self.encoder_blocks:
             skip, x = encoder_block(x)
             encoder_features.append(skip)
@@ -113,7 +129,12 @@ class Predictor(nn.Module):
 
         """ Transformer encoder """
 
+        # add positional embeddings
         x = x.view(b, t, -1) # (b*t, bottleneck_dim) -> (b, t, bottleneck_dim)
+        pos_emb = self.position_embeddings(torch.arange(t).to(x.device)).unsqueeze(0) # (1, t, bottleneck_dim)
+        x = x + pos_emb
+
+        # causal attention processing
         x = self.transformer_encoder(x, 
                                      is_causal=True, 
                                      mask=nn.Transformer.generate_square_subsequent_mask(t).to(x.device)) # (b, t, bottleneck_dim) -> (b, t, bottleneck_dim
