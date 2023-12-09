@@ -9,3 +9,7 @@ __pycache__/
 *.npy
 *.pt
 *.pth
+*.ckpt
+*.png
+*.out
+*.gif

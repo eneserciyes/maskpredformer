@@ -58,8 +58,8 @@ class decoder_block(nn.Module):
 class Predictor(nn.Module):
     def __init__(self, 
                 in_channels=49, 
-                channels=[64, 128, 256, 512], 
-                bottleneck_dim=512,
+                channels=[64, 128, 256], 
+                bottleneck_dim=256,
                 nhead=8,
                 transformer_num_layers=6,
         ):
@@ -138,10 +138,10 @@ class Predictor(nn.Module):
 
 
 if __name__ == "__main__":
-    b = 2
+    b = 1
     t = 22
-    h = 160
-    w = 240
+    h = 80
+    w = 120
     predictor = Predictor()
     mask_predictions = torch.randn(b, t, 49, h, w)
     print(predictor(mask_predictions).shape)
