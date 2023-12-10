@@ -22,19 +22,52 @@ def dict_to_folder_name(d):
 
 
 if __name__ == "__main__":
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser()
+    # Trainer arguments
+    parser.add_argument("--log_every_n_steps", type=int, default=100)
+    parser.add_argument("--val_check_interval", type=float, default=1.0)
+
+    # Hyperparameters for the model
+    parser.add_argument("--unlabeled", action="store_true")
+    parser.add_argument("--data_root", type=str, default="data/DL/")
+    parser.add_argument("--max_epochs", type=int, default=100)
+    parser.add_argument("--batch_size", type=int, default=4)
+    parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument("--weight_decay", type=float, default=0.0)
+    parser.add_argument("--hid_S", type=int, default=64)
+    parser.add_argument("--hid_T", type=int, default=512)
+    parser.add_argument("--N_S", type=int, default=4)
+    parser.add_argument("--N_T", type=int, default=8)
+    parser.add_argument("--model_type", type=str, default="gSTA")
+    parser.add_argument("--in_shape", type=int, default=[11, 3, 160, 240], nargs="+")
+
+    args = parser.parse_args()
+
     pl.seed_everything(42)
     module = MaskSimVPModule(
-        **DEFAULT_MODEL_CONFIG,
-        batch_size=1,
-        lr=1e-3,
-        weight_decay=0.0,
-        max_epochs=100,
-        data_root="data/DL/",
+        in_shape=args.in_shape,
+        hid_S=args.hid_S,
+        hid_T=args.hid_T,
+        N_S=args.N_S,
+        N_T=args.N_T,
+        model_type=args.model_type,
+        data_root=args.data_root,
+        batch_size=args.batch_size,
+        lr=args.lr,
+        weight_decay=args.weight_decay,
+        max_epochs=args.max_epochs,
+        unlabeled=args.unlabeled,
     )
-    run_name = dict_to_folder_name(module.hparams)
+    hparams = module.hparams.copy()
+    del hparams["data_root"]
+    run_name = dict_to_folder_name(hparams)
     dirpath = os.path.join("checkpoints/", run_name)
 
-    sample_video_cb = SampleVideoCallback(module.val_set)
+    sample_video_cb = SampleVideoCallback(
+        module.val_set, video_path=os.path.join(dirpath, "val_videos")
+    )
     logger = WandbLogger(project="mask-predformer", name="train_simvp")
     checkpoint_callback = ModelCheckpoint(
         dirpath=dirpath,
@@ -49,9 +82,8 @@ if __name__ == "__main__":
         max_epochs=module.hparams.max_epochs,
         accelerator="gpu",
         logger=logger,
-        log_every_n_steps=100,
-        val_check_interval=0.5,
-        gradient_clip_val=0.5,
+        log_every_n_steps=args.log_every_n_steps,
+        val_check_interval=args.val_check_interval,
         callbacks=[sample_video_cb, checkpoint_callback, lr_monitor],
     )
 

@@ -23,13 +23,13 @@ class MaskSimVPModule(pl.LightningModule):
     def __init__(self, 
                  in_shape, hid_S, hid_T, N_S, N_T, model_type,
                  batch_size, lr, weight_decay, max_epochs,
-                 data_root):
+                 data_root, unlabeled=False):
         super().__init__()
         self.save_hyperparameters()
         self.model = MaskSimVP(
             in_shape, hid_S, hid_T, N_S, N_T, model_type
         )
-        self.train_set = DLDataset(data_root, "train")
+        self.train_set = DLDataset(data_root, "train", unlabeled=unlabeled)
         self.val_set = DLDataset(data_root, "val")
         self.criterion = torch.nn.CrossEntropyLoss()
     
@@ -80,12 +80,21 @@ class MaskSimVPModule(pl.LightningModule):
             self.parameters(), lr=self.hparams.lr, 
             weight_decay=self.hparams.weight_decay
         )
-        scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(
             optimizer, max_lr=self.hparams.lr,
             total_steps=self.hparams.max_epochs*len(self.train_dataloader()),
             final_div_factor=1e4
         )
-        return [optimizer], [scheduler]
+        opt_dict = {
+            "optimizer": optimizer,
+            "lr_scheduler":{
+                "scheduler": lr_scheduler,
+                "interval": "step",
+                "frequency": 1
+            } 
+        }
+
+        return opt_dict
 
 # %% ../nbs/02_trainer.ipynb 9
 class SampleVideoCallback(pl.Callback):

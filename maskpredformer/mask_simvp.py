@@ -14,7 +14,7 @@ DEFAULT_MODEL_CONFIG = {
     # N_S, N_T, hid_S, hid_T, model_type
     'in_shape': [11, 3, 160, 240],
     'hid_S': 64,
-    'hid_T': 256,
+    'hid_T': 512,
     'N_S': 4,
     'N_T': 8,
     'model_type': 'gSTA',

@@ -15,11 +15,17 @@ DEFAULT_DATA_PATH = "/home/enes/dev/maskpredformer/data/DL"
 
 # %% ../nbs/01_simvp_dataset.ipynb 4
 class DLDataset(Dataset):
-    def __init__(self, root, mode):
+    def __init__(self, root, mode, unlabeled=False):
         self.mask_path = os.path.join(root, f"{mode}_masks.pt")
         self.mode = mode
         print("INFO: Loading masks from", self.mask_path)
-        self.masks = torch.load(self.mask_path)
+        if unlabeled:
+            self.masks = torch.cat([
+                torch.load(self.mask_path), 
+                torch.load(os.path.join(root, f"unlabeled_masks.pt"))
+            ], dim=0)
+        else:
+            self.masks = torch.load(self.mask_path)
         self.transform = transforms.Compose([
             transforms.RandomHorizontalFlip(p=0.5),
         ])
