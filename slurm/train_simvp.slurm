@@ -27,5 +27,5 @@ singularity exec --nv \
 	    --overlay /scratch/me2646/maskpredformer.ext3:ro \
 /share/apps/images/cuda11.7.99-cudnn8.5-devel-ubuntu22.04.2.sif \
 /bin/bash -c "
-source /ext/env.sh; python3 train_simvp.py --unlabeled
+source /ext3/env.sh; python3 train_simvp.py --unlabeled
 "
