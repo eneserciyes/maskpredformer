@@ -22,7 +22,7 @@ class DLDataset(Dataset):
         if unlabeled:
             self.masks = torch.cat([
                 torch.load(self.mask_path), 
-                torch.load(os.path.join(root, f"unlabeled_masks.pt"))
+                torch.load(os.path.join(root, f"unlabeled_masks.pt")).squeeze()
             ], dim=0)
         else:
             self.masks = torch.load(self.mask_path)
