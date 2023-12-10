@@ -27,5 +27,5 @@ singularity exec --nv \
 	    --overlay /scratch/me2646/maskpredformer.ext3:ro \
 /share/apps/images/cuda11.7.99-cudnn8.5-devel-ubuntu22.04.2.sif \
 /bin/bash -c "
-source /ext3/env.sh; python3 train_simvp.py --unlabeled --model_type convmixer --lr 1e-2 --max_epochs 2000 --devices 4 --batch_size 8
+source /ext3/env.sh; python3 train_simvp.py --unlabeled --devices 4 --strategy ddp_find_unused_parameters_true
 "

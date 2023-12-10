@@ -22,13 +22,13 @@ DEFAULT_MODEL_CONFIG = {
 
 # %% ../nbs/00_mask_simvp.ipynb 4
 class MaskSimVP(nn.Module):
-    def __init__(self, in_shape, hid_S, hid_T, N_S, N_T, model_type, downsample=False):
+    def __init__(self, in_shape, hid_S, hid_T, N_S, N_T, model_type, drop_path=0.0, downsample=False):
         super().__init__()
         c = in_shape[1]
         self.simvp = SimVP_Model(
             in_shape=in_shape, hid_S=hid_S, 
             hid_T=hid_T, N_S=N_S, N_T=N_T, 
-            model_type=model_type)
+            model_type=model_type, drop_path=drop_path)
         self.token_embeddings = nn.Embedding(49, c)
         self.out_conv = nn.Conv2d(c, 49, 1, 1)
         self.pre_seq_len = 11
