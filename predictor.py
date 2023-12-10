@@ -58,8 +58,9 @@ class decoder_block(nn.Module):
 class Predictor(nn.Module):
     def __init__(self, 
                 embed_dim=32, 
-                channels=[64, 128, 256], 
-                bottleneck_dim=256,
+                channels=[32, 64, 128], 
+                bottleneck_dim=128,
+                transformer_dim=256,
                 nhead=8,
                 transformer_num_layers=6,
                 block_size=11,
@@ -70,20 +71,31 @@ class Predictor(nn.Module):
         self.bottleneck_dim = bottleneck_dim
         self.channels = channels
         self.block_size = block_size
-
+        
+        
         """ Embeddings """
         self.token_embeddings = nn.Embedding(49, embed_dim)
-        self.position_embeddings = nn.Embedding(block_size, bottleneck_dim)
+        self.position_embeddings = nn.Embedding(block_size, transformer_dim)
 
         """ Transformer Encoder """
         self.transformer_encoder = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(d_model=bottleneck_dim, 
+            nn.TransformerEncoderLayer(d_model=transformer_dim, 
                                        nhead=nhead, batch_first=True), 
             num_layers=transformer_num_layers
         )
+        
+        """ Downscale Conv """
+        self.init_conv = nn.Conv2d(embed_dim, embed_dim, kernel_size=3, padding=1, stride=2)
 
-        self.proj = nn.Linear(bottleneck_dim*10*15, bottleneck_dim)
-        self.up_proj = nn.Linear(bottleneck_dim, bottleneck_dim*10*15)
+        self.proj = nn.Sequential(
+            nn.Linear(bottleneck_dim*10*15, bottleneck_dim*10), 
+            nn.LeakyReLU(), 
+            nn.Linear(bottleneck_dim*10, transformer_dim))
+        self.up_proj = nn.Sequential(
+            nn.Linear(transformer_dim, bottleneck_dim*10),
+            nn.LeakyReLU(),
+            nn.Linear(bottleneck_dim*10, bottleneck_dim*10*15))
+        
         
         """ Encoder """
         self.encoder_blocks = nn.ModuleList(
@@ -100,18 +112,24 @@ class Predictor(nn.Module):
             decoder_block(bottleneck_dim, channels[-1])] + [
             decoder_block(channels[i], channels[i-1]) for i in range(len(channels)-1, 0, -1)
         ])
+        
+        """ UpConv """
+        self.up_conv = nn.ConvTranspose2d(channels[0], channels[0], kernel_size=2, stride=2, padding=0)
 
         """ Output """
         self.out = nn.Conv2d(channels[0], out_channels, kernel_size=1, padding=0)
 
     def forward(self, inputs):
         """ Embed input labels """
+#         import pdb; pdb.set_trace()
         embeds = self.token_embeddings(inputs) # (b, t, h, w) -> (b, t, h, w, embed_dim)
         embeds = embeds.permute(0, 1, 4, 2, 3) # (b, t, h, w, embed_dim) -> (b, embed_dim, t, h, w)
-
         b, t, c, h, w = embeds.shape
         x = embeds.contiguous().view(b*t, c, h, w) # (b, t, c, h, w) -> (b*t, c, h, w)
-
+        
+        """ Downscale x2 """
+        x = self.init_conv(x)
+        
         """ Encoder """
         encoder_features = []        
 
@@ -125,31 +143,32 @@ class Predictor(nn.Module):
         """ Proj to Transformer """
         _, _, h_b, w_b = x.shape
         x = x.view(b*t, -1) # (b*t, bottleneck_dim, h_b, w_b) -> (b*t, bottleneck_dim*h_b*w_b)
-        x = self.proj(x) # (b*t, bottleneck_dim*h_b*w_b) -> (b*t, bottleneck_dim)
+        x = self.proj(x) # (b*t, bottleneck_dim*h_b*w_b) -> (b*t, transformer_dim)
 
         """ Transformer encoder """
 
         # add positional embeddings
-        x = x.view(b, t, -1) # (b*t, bottleneck_dim) -> (b, t, bottleneck_dim)
-        pos_emb = self.position_embeddings(torch.arange(t).to(x.device)).unsqueeze(0) # (1, t, bottleneck_dim)
+        x = x.view(b, t, -1) # (b*t, transformer_dim) -> (b, t, transformer_dim)
+        pos_emb = self.position_embeddings(torch.arange(t).to(x.device)).unsqueeze(0) # (1, t, transformer_dim)
         x = x + pos_emb
 
         # causal attention processing
         x = self.transformer_encoder(x, 
                                      is_causal=True, 
-                                     mask=nn.Transformer.generate_square_subsequent_mask(t).to(x.device)) # (b, t, bottleneck_dim) -> (b, t, bottleneck_dim
+                                     mask=nn.Transformer.generate_square_subsequent_mask(t).to(x.device)
+                                   ) # (b, t, transformer_dim) -> (b, t, transformer_dim)
 
         """ Proj to Decoder """
         x = x.view(b*t, -1)
-        x = self.up_proj(x) # (b*t, bottleneck_dim) -> (b*t, bottleneck_dim*h_b*w_b)
+        x = self.up_proj(x) # (b*t, transformer_dim) -> (b*t, bottleneck_dim*h_b*w_b)
 
         """ Decoder """
         x = x.view(b*t, self.bottleneck_dim, h_b, w_b) # (b*t, bottleneck_dim*h_b*w_b) -> (b*t, bottleneck_dim, h_b, w_b)
         for decoder_block, skip in zip(self.decoder_blocks, encoder_features[::-1]):
-            # add the connections from previous frame to current frame
-            # skip = skip.view(b, t, *skip.shape[1:])
-            # skip = torch.cat([skip[:, 0:1], skip[:, :-1]], dim=1).view(b*t, *skip.shape[2:])
             x = decoder_block(x, skip)
+        
+        """ UpConv """
+        x = self.up_conv(x)
 
         """ Output """
         x = self.out(x)
@@ -161,8 +180,8 @@ class Predictor(nn.Module):
 if __name__ == "__main__":
     b = 1
     t = 22
-    h = 80
-    w = 120
+    h = 160
+    w = 240
     predictor = Predictor()
     mask_predictions = torch.randn(b, t, 49, h, w)
     print(predictor(mask_predictions).shape)

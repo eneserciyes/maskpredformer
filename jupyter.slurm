@@ -2,7 +2,7 @@
 
 #SBATCH --job-name=jupyter
 ## change the last two digits to your team id
-#SBATCH --account=csci_ga_2572_2023fl_19
+#SBATCH --account=csci_ga_2572_001-2023fa-19
 
 ## change the partition number to use different number of GPUs
 #SBATCH --partition=n1s8-v100-1
@@ -68,7 +68,7 @@ echo "Jupyter is starting..."
 
 singularity exec $nv \
 	    --bind /scratch \
-	    --overlay /scratch/maskpredformer.ext3:roh \
+	    --overlay /scratch/me2646/maskpredformer.ext3:ro \
 /share/apps/images/cuda11.7.99-cudnn8.5-devel-ubuntu22.04.2.sif \
 /bin/bash -c "
 source /ext/env.sh; jupyter notebook --no-browser --port $port --notebook-dir=$(pwd)
