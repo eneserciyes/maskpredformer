@@ -23,11 +23,11 @@ class MaskSimVPModule(pl.LightningModule):
     def __init__(self, 
                  in_shape, hid_S, hid_T, N_S, N_T, model_type,
                  batch_size, lr, weight_decay, max_epochs,
-                 data_root, unlabeled=False):
+                 data_root, unlabeled=False, downsample=False):
         super().__init__()
         self.save_hyperparameters()
         self.model = MaskSimVP(
-            in_shape, hid_S, hid_T, N_S, N_T, model_type
+            in_shape, hid_S, hid_T, N_S, N_T, model_type, downsample=downsample
         )
         self.train_set = DLDataset(data_root, "train", unlabeled=unlabeled)
         self.val_set = DLDataset(data_root, "val")
