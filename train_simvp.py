@@ -25,7 +25,7 @@ if __name__ == "__main__":
     pl.seed_everything(42)
     module = MaskSimVPModule(
         **DEFAULT_MODEL_CONFIG,
-        batch_size=16,
+        batch_size=1,
         lr=1e-3,
         weight_decay=0.0,
         max_epochs=100,
