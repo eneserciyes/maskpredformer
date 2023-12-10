@@ -18,7 +18,7 @@
 #SBATCH --cpus-per-task=24
 
 #SBATCH --time=12:00:00
-#SBATCH --output=logs/train_predictor_4gpu_%j.out
+#SBATCH --output=logs/train_simvp_%j.out
 #SBATCH --exclusive
 #SBATCH --requeue
 
@@ -27,5 +27,5 @@ singularity exec --nv \
 	    --overlay /scratch/me2646/maskpredformer.ext3:ro \
 /share/apps/images/cuda11.7.99-cudnn8.5-devel-ubuntu22.04.2.sif \
 /bin/bash -c "
-source /ext/env.sh; python3 train_predictor.py
+source /ext/env.sh; python3 train_simvp.py
 "

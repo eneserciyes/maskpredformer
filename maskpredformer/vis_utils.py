@@ -37,7 +37,9 @@ def show_gif(prev, true, pred, vmax=48, vmin=0, cmap='tab20b', out_path=None):
                     im = ax.imshow(pred[i-frames], cmap=cmap, vmax=vmax, vmin=vmin)
             ax.axis('off')
         plt.savefig('tmp.png', bbox_inches='tight', format='png')
+        plt.close()
         images.append(imageio.imread('tmp.png'))
+
     plt.close()
     os.remove('tmp.png')
 

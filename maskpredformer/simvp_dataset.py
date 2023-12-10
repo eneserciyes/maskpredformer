@@ -17,6 +17,7 @@ DEFAULT_DATA_PATH = "/home/enes/dev/maskpredformer/data/DL"
 class DLDataset(Dataset):
     def __init__(self, root, mode):
         self.mask_path = os.path.join(root, f"{mode}_masks.pt")
+        self.mode = mode
         print("INFO: Loading masks from", self.mask_path)
         self.masks = torch.load(self.mask_path)
         self.transform = transforms.Compose([
@@ -27,7 +28,10 @@ class DLDataset(Dataset):
         return self.masks.shape[0]
     
     def __getitem__(self, idx):
-        ep = self.transform(self.masks[idx])
+        if self.mode == "train":
+            ep = self.transform(self.masks[idx])
+        else:
+            ep = self.masks[idx]
         data = ep[:11].long()
         labels = ep[11:].long()
         return data, labels
