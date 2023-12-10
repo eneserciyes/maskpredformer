@@ -17,7 +17,7 @@
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=24
 
-#SBATCH --time=12:00:00
+#SBATCH --time=24:00:00
 #SBATCH --output=logs/train_simvp_%j.out
 #SBATCH --exclusive
 #SBATCH --requeue
@@ -27,5 +27,8 @@ singularity exec --nv \
 	    --overlay /scratch/me2646/maskpredformer.ext3:ro \
 /share/apps/images/cuda11.7.99-cudnn8.5-devel-ubuntu22.04.2.sif \
 /bin/bash -c "
-source /ext3/env.sh; python3 train_simvp.py --unlabeled --devices 4 --strategy ddp_find_unused_parameters_true
+source /ext3/env.sh; python3 train_simvp.py --unlabeled --model_type convmixer \
+--downsample --in_shape 11 49 160 240 --lr 1e-2 --pre_seq_len=11 --aft_seq_len=1 \
+--max_epochs 1000 --devices 4 --batch_size 8 \
+--check_val_every_n_epoch=20 --strategy ddp_find_unused_parameters_true
 "

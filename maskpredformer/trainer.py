@@ -23,14 +23,16 @@ class MaskSimVPModule(pl.LightningModule):
     def __init__(self, 
                  in_shape, hid_S, hid_T, N_S, N_T, model_type,
                  batch_size, lr, weight_decay, max_epochs,
-                 data_root, drop_path=0.0, unlabeled=False, downsample=False):
+                 data_root, pre_seq_len=11, aft_seq_len=11,
+                 drop_path=0.0, unlabeled=False, downsample=False):
         super().__init__()
         self.save_hyperparameters()
         self.model = MaskSimVP(
-            in_shape, hid_S, hid_T, N_S, N_T, model_type, downsample=downsample, drop_path=drop_path
+            in_shape, hid_S, hid_T, N_S, N_T, model_type, downsample=downsample, drop_path=drop_path,
+            pre_seq_len=pre_seq_len, aft_seq_len=aft_seq_len
         )
-        self.train_set = DLDataset(data_root, "train", unlabeled=unlabeled)
-        self.val_set = DLDataset(data_root, "val")
+        self.train_set = DLDataset(data_root, "train", unlabeled=unlabeled, pre_seq_len=pre_seq_len, aft_seq_len=aft_seq_len)
+        self.val_set = DLDataset(data_root, "val", pre_seq_len=pre_seq_len, aft_seq_len=aft_seq_len)
         self.criterion = torch.nn.CrossEntropyLoss()
     
     def train_dataloader(self):
@@ -130,7 +132,7 @@ class SampleVideoCallback(pl.Callback):
         return gif_path
     
     def on_validation_epoch_end(self, trainer, pl_module):
-        if pl_module.global_rank == 0:
+        if trainer.global_rank == 0:
             gif_path = self.generate_video(pl_module)
             trainer.logger.experiment.log({
                 "val_video": wandb.Video(gif_path, fps=4, format="gif")

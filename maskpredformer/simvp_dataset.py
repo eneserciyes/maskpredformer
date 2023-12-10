@@ -15,7 +15,7 @@ DEFAULT_DATA_PATH = "/home/enes/dev/maskpredformer/data/DL"
 
 # %% ../nbs/01_simvp_dataset.ipynb 4
 class DLDataset(Dataset):
-    def __init__(self, root, mode, unlabeled=False):
+    def __init__(self, root, mode, unlabeled=False, pre_seq_len=11, aft_seq_len=11, ep_len=22):
         self.mask_path = os.path.join(root, f"{mode}_masks.pt")
         self.mode = mode
         print("INFO: Loading masks from", self.mask_path)
@@ -29,15 +29,22 @@ class DLDataset(Dataset):
         self.transform = transforms.Compose([
             transforms.RandomHorizontalFlip(p=0.5),
         ])
+        self.pre_seq_len=pre_seq_len
+        self.aft_seq_len=aft_seq_len
+        self.seq_per_ep = ep_len - (pre_seq_len + aft_seq_len) + 1
 
     def __len__(self):
-        return self.masks.shape[0]
+        return self.masks.shape[0] * self.seq_per_ep
     
     def __getitem__(self, idx):
+        ep_idx = idx // self.seq_per_ep
+        offset = idx % self.seq_per_ep
+        total_len = self.pre_seq_len + self.aft_seq_len
+        
         if self.mode == "train":
-            ep = self.transform(self.masks[idx])
+            ep = self.transform(self.masks[ep_idx, offset:offset+total_len])
         else:
-            ep = self.masks[idx]
-        data = ep[:11].long()
-        labels = ep[11:].long()
+            ep = self.masks[ep_idx, offset:offset+total_len]
+        data = ep[:self.pre_seq_len].long()
+        labels = ep[self.pre_seq_len:].long()
         return data, labels

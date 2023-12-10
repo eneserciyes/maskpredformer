@@ -22,7 +22,7 @@ DEFAULT_MODEL_CONFIG = {
 
 # %% ../nbs/00_mask_simvp.ipynb 4
 class MaskSimVP(nn.Module):
-    def __init__(self, in_shape, hid_S, hid_T, N_S, N_T, model_type, drop_path=0.0, downsample=False):
+    def __init__(self, in_shape, hid_S, hid_T, N_S, N_T, model_type, pre_seq_len=11, aft_seq_len=11, drop_path=0.0, downsample=False):
         super().__init__()
         c = in_shape[1]
         self.simvp = SimVP_Model(
@@ -31,8 +31,8 @@ class MaskSimVP(nn.Module):
             model_type=model_type, drop_path=drop_path)
         self.token_embeddings = nn.Embedding(49, c)
         self.out_conv = nn.Conv2d(c, 49, 1, 1)
-        self.pre_seq_len = 11
-        self.after_seq_len = 11
+        self.pre_seq_len = pre_seq_len
+        self.aft_seq_len = aft_seq_len
         self.downsample = downsample
         self.down_conv = nn.Conv2d(c, c, kernel_size=3, stride=2, padding=1)
         self.up_conv = nn.ConvTranspose2d(c, c, kernel_size=2, stride=2)
@@ -47,20 +47,26 @@ class MaskSimVP(nn.Module):
             x = self.down_conv(x)
             x = x.view(b, t, *x.shape[1:])
 
-        d = self.after_seq_len // self.pre_seq_len
-        m = self.after_seq_len % self.pre_seq_len
-
-        y_hat = []
-        cur_seq = x.clone()
-        for _ in range(d):
-            cur_seq = self.simvp(cur_seq)
-            y_hat.append(cur_seq)
-        
-        if m != 0:
-            cur_seq = self.simvp(cur_seq)
-            y_hat.append(cur_seq[:, :m])
-        
-        y_hat = torch.cat(y_hat, dim=1)
+        if self.aft_seq_len == self.pre_seq_len:
+            y_hat = self.simvp(x)
+        elif self.aft_seq_len < self.pre_seq_len:
+            y_hat = self.simvp(x)
+            y_hat = y_hat[:, :self.aft_seq_len]
+        elif self.aft_seq_len > self.pre_seq_len:
+            d = self.aft_seq_len // self.pre_seq_len
+            m = self.aft_seq_len % self.pre_seq_len
+    
+            y_hat = []
+            cur_seq = x.clone()
+            for _ in range(d):
+                cur_seq = self.simvp(cur_seq)
+                y_hat.append(cur_seq)
+            
+            if m != 0:
+                cur_seq = self.simvp(cur_seq)
+                y_hat.append(cur_seq[:, :m])
+            
+            y_hat = torch.cat(y_hat, dim=1)
 
         b, t, *_ = y_hat.shape
         y_hat = y_hat.view(b*t, *y_hat.shape[2:])
