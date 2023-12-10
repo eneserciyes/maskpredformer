@@ -31,6 +31,7 @@ if __name__ == "__main__":
 
     # Hyperparameters for the model
     parser.add_argument("--unlabeled", action="store_true")
+    parser.add_argument("--downsample", action="store_true")
     parser.add_argument("--data_root", type=str, default="data/DL/")
     parser.add_argument("--max_epochs", type=int, default=100)
     parser.add_argument("--batch_size", type=int, default=4)
@@ -59,6 +60,7 @@ if __name__ == "__main__":
         weight_decay=args.weight_decay,
         max_epochs=args.max_epochs,
         unlabeled=args.unlabeled,
+        downsample=args.downsample,
     )
     hparams = module.hparams.copy()
     del hparams["data_root"]
