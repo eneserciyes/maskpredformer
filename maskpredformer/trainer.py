@@ -72,7 +72,7 @@ class MaskSimVPModule(pl.LightningModule):
         y = y.view(b*t, *y.shape[2:])
        
         loss = self.criterion(y_hat_logits, y)
-        self.log("val_loss", loss)
+        self.log("val_loss", loss, sync_dist=True)
         return loss
 
     def configure_optimizers(self):

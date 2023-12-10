@@ -28,6 +28,7 @@ if __name__ == "__main__":
     # Trainer arguments
     parser.add_argument("--log_every_n_steps", type=int, default=100)
     parser.add_argument("--val_check_interval", type=float, default=1.0)
+    parser.add_argument("--fast_dev_run", action="store_true")
 
     # Hyperparameters for the model
     parser.add_argument("--unlabeled", action="store_true")
@@ -45,8 +46,8 @@ if __name__ == "__main__":
     parser.add_argument("--in_shape", type=int, default=[11, 3, 160, 240], nargs="+")
 
     # MultiGPU
-    parser.add_argument("--devices", type=int, default=4)
-    parser.add_argument("--strategy", type=str, default='ddp_find_unused_parameters_true')
+    parser.add_argument("--devices", type=int, default=1)
+    parser.add_argument("--strategy", type=str, default='auto')
 
     args = parser.parse_args()
 
@@ -90,6 +91,7 @@ if __name__ == "__main__":
         devices=args.devices,
         strategy=args.strategy,
         logger=logger,
+        fast_dev_run=args.fast_dev_run,
         log_every_n_steps=args.log_every_n_steps,
         val_check_interval=args.val_check_interval,
         callbacks=[sample_video_cb, checkpoint_callback, lr_monitor],
