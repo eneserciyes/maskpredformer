@@ -44,6 +44,10 @@ if __name__ == "__main__":
     parser.add_argument("--model_type", type=str, default="gSTA")
     parser.add_argument("--in_shape", type=int, default=[11, 3, 160, 240], nargs="+")
 
+    # MultiGPU
+    parser.add_argument("--devices", type=int, default=4)
+    parser.add_argument("--strategy", type=str, default='ddp_find_unused_parameters_true')
+
     args = parser.parse_args()
 
     pl.seed_everything(42)
@@ -83,6 +87,8 @@ if __name__ == "__main__":
     trainer = pl.Trainer(
         max_epochs=module.hparams.max_epochs,
         accelerator="gpu",
+        devices=args.devices,
+        strategy=args.strategy,
         logger=logger,
         log_every_n_steps=args.log_every_n_steps,
         val_check_interval=args.val_check_interval,
