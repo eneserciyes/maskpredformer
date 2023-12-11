@@ -103,7 +103,7 @@ if __name__ == "__main__":
             "schedule_k": ss_params["schedule_k"],
             "unlabeled": ss_params["unlabeled"],
             "use_gt_data": ss_params["use_gt_data"],
-            "scheduler_type": ss_params["scheduler_type"],
+            "schedule_type": ss_params["schedule_type"],
         }
     )
     dirpath = os.path.join("checkpoints/", run_name)
