@@ -17,10 +17,12 @@
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=24
 
-#SBATCH --time=24:00:00
+#SBATCH --time=02:00:00
 #SBATCH --output=logs/train_simvp_%j.out
-#SBATCH --exclusive
 #SBATCH --requeue
+#SBATCH --signal=SIGUSR1@90
+#SBATCH --mail-user=me2646@nyu.edu
+#SBATCH --mail-type=ALL
 
 singularity exec --nv \
 	    --bind /scratch \
