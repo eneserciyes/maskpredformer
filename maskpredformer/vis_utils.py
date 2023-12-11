@@ -10,7 +10,7 @@ import os
 
 # %% ../nbs/99_vis_utils.ipynb 3
 # Generate gif from a list of images
-def show_gif(prev, true, pred, vmax=48, vmin=0, cmap='tab20b', out_path=None):
+def show_gif(prev, true, pred, out_path, vmax=48, vmin=0, cmap='tab20b'):
     def swap_axes(x):
             if len(x.shape) > 3:
                 return x.swapaxes(1,2).swapaxes(2,3)
@@ -20,6 +20,7 @@ def show_gif(prev, true, pred, vmax=48, vmin=0, cmap='tab20b', out_path=None):
     prev_frames = prev.shape[0]
     frames = prev_frames + true.shape[0]
     images = []
+    tmp_path = os.path.join(os.path.dirname(out_path), 'tmp.png')
     for i in range(frames):
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(9, 6))
         for t, ax in enumerate(axes):
@@ -36,12 +37,12 @@ def show_gif(prev, true, pred, vmax=48, vmin=0, cmap='tab20b', out_path=None):
                 else:
                     im = ax.imshow(pred[i-frames], cmap=cmap, vmax=vmax, vmin=vmin)
             ax.axis('off')
-        plt.savefig('tmp.png', bbox_inches='tight', format='png')
+        plt.savefig(tmp_path, bbox_inches='tight', format='png')
         plt.close()
-        images.append(imageio.imread('tmp.png'))
+        images.append(imageio.imread(tmp_path))
 
     plt.close()
-    os.remove('tmp.png')
+    os.remove(tmp_path)
 
     if out_path is not None:
         if not out_path.endswith('gif'):

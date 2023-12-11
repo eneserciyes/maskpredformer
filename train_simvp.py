@@ -46,6 +46,8 @@ if __name__ == "__main__":
     parser.add_argument("--N_T", type=int, default=8)
     parser.add_argument("--model_type", type=str, default="gSTA")
     parser.add_argument("--in_shape", type=int, default=[11, 3, 160, 240], nargs="+")
+    parser.add_argument("--pre_seq_len", type=int, default=11)
+    parser.add_argument("--aft_seq_len", type=int, default=11)
 
     # MultiGPU
     parser.add_argument("--devices", type=int, default=1)
@@ -68,7 +70,9 @@ if __name__ == "__main__":
         max_epochs=args.max_epochs,
         unlabeled=args.unlabeled,
         downsample=args.downsample,
-        drop_path=args.drop_path
+        drop_path=args.drop_path,
+        pre_seq_len=args.pre_seq_len,
+        aft_seq_len=args.aft_seq_len
     )
     hparams = module.hparams.copy()
     del hparams["data_root"]
