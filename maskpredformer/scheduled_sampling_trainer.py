@@ -93,9 +93,13 @@ class MaskSimVPScheduledSamplingModule(pl.LightningModule):
         loss = self.criterion(y_hat_logits, y)
         
         self.log("train_loss", loss)
-        self.log("sample_steps", self.sample_steps)
-        self.log("schedule_idx", self.schedule_idx)
-        self.log("schedule_prob", 1 - inv_sigmoid_schedule(self.schedule_idx, self.schedule_max, self.hparams.schedule_k))
+        self.logger.log_metrics(
+            {
+                "sample_steps": self.sample_steps,
+                "schedule_idx": self.schedule_idx,
+                "schedule_prob": 1 - inv_sigmoid_schedule(self.schedule_idx, self.schedule_max, self.hparams.schedule_k)
+            }
+        )
         return loss
     
     def validation_step(self, batch, batch_idx):
@@ -106,10 +110,10 @@ class MaskSimVPScheduledSamplingModule(pl.LightningModule):
         return iou
 
     def on_train_epoch_end(self):
-        if (self.current_epoch+1) % self.hparams.sample_step_inc_every_n_epoch:
+        if (self.current_epoch+1) % self.hparams.sample_step_inc_every_n_epoch == 0:
             print("Increasing sample steps")
             self.schedule_idx = 0
-            self.sample_steps = max(self.sample_steps+1, self.hparams.max_sample_steps)
+            self.sample_steps = min(self.sample_steps+1, self.hparams.max_sample_steps)
         
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(
