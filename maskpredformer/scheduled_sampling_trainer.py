@@ -34,7 +34,7 @@ class MaskSimVPScheduledSamplingModule(pl.LightningModule):
                  in_shape, hid_S, hid_T, N_S, N_T, model_type,
                  batch_size, lr, weight_decay, max_epochs, data_root, use_gt_data,
                  sample_step_inc_every_n_epoch, schedule_k=1.05, max_sample_steps=5,
-                 schedule_type="exponential",
+                 schedule_type="exponential", load_datasets=True,
                  pre_seq_len=11, aft_seq_len=1, drop_path=0.0, unlabeled=False, downsample=False,
                 ):
         super().__init__()
@@ -43,17 +43,20 @@ class MaskSimVPScheduledSamplingModule(pl.LightningModule):
             in_shape, hid_S, hid_T, N_S, N_T, model_type, downsample=downsample, drop_path=drop_path,
             pre_seq_len=pre_seq_len, aft_seq_len=aft_seq_len
         )
-        self.train_set = DLDataset(data_root, "train", unlabeled=unlabeled, use_gt_data=use_gt_data, pre_seq_len=pre_seq_len, aft_seq_len=max_sample_steps+1)
-        self.val_set = ValMetricDLDataset(data_root)
+        if load_datasets:
+            self.train_set = DLDataset(data_root, "train", unlabeled=unlabeled, use_gt_data=use_gt_data, pre_seq_len=pre_seq_len, aft_seq_len=max_sample_steps+1)
+            self.val_set = ValMetricDLDataset(data_root)
+            self.schedule_max = (len(self.train_set)//batch_size) * sample_step_inc_every_n_epoch
+            print(f"Schedule max: {self.schedule_max}")
+        else:
+            self.schedule_max = -1 # dummy value
         
         self.criterion = torch.nn.CrossEntropyLoss()
         self.iou_metric = JaccardIndex(task='multiclass', num_classes=49)
         
         self.schedule_idx = 0
         self.sample_steps = 1
-        self.schedule_max = (len(self.train_set)//batch_size) * sample_step_inc_every_n_epoch
         self.sampled_count = 0
-        print(f"Schedule max: {self.schedule_max}")
 
     def get_p(self):
         if self.hparams.schedule_type == "exponential":
