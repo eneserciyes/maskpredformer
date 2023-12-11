@@ -50,16 +50,22 @@ class MaskSimVPScheduledSamplingModule(pl.LightningModule):
         
         self.schedule_idx = 0
         self.sample_steps = 1
-        self.schedule_max = len(self.train_dataloader()) * sample_step_inc_every_n_epoch
+        self.schedule_max = (len(self.train_set)//batch_size) * sample_step_inc_every_n_epoch
+        self.sampled_count = 0
+        print(f"Schedule max: {self.schedule_max}")
 
-    def sample_or_not(self):
-        assert self.schedule_idx < self.schedule_max, "Schedule idx larger than max, something wrong with schedule"
+    def get_p(self):
         if self.hparams.schedule_type == "exponential":
             p = 1-exp_schedule(self.schedule_idx, self.schedule_max, self.hparams.schedule_k)
         elif self.hparams.schedule_type == "inverse_sigmoid":
             p = 1 - inv_sigmoid_schedule(self.schedule_idx, self.schedule_max, self.hparams.schedule_k)
         else:
             raise NotImplementedError(f"Schedule type {self.hparams.schedule_type} not implemented")
+        return p
+
+    def sample_or_not(self):
+        assert self.schedule_idx < self.schedule_max, "Schedule idx larger than max, something wrong with schedule"
+        p = self.get_p()
         self.schedule_idx += 1
         return random.random() < p
     
@@ -87,6 +93,7 @@ class MaskSimVPScheduledSamplingModule(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, y = batch
         if self.sample_or_not():
+            self.sampled_count += 1
             x = self.sample_autoregressive(x, self.sample_steps)
             y = y[:, self.sample_steps:self.sample_steps+1] # get the next label after sampling model `sample_steps` times
         else:
@@ -108,7 +115,8 @@ class MaskSimVPScheduledSamplingModule(pl.LightningModule):
                 {
                     "sample_steps": self.sample_steps,
                     "schedule_idx": self.schedule_idx,
-                    "schedule_prob": 1 - inv_sigmoid_schedule(self.schedule_idx, self.schedule_max, self.hparams.schedule_k)
+                    "schedule_prob": self.get_p(),
+                    "sampled_count": self.sampled_count,
                 }
             )
         return loss
