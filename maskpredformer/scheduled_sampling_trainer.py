@@ -17,7 +17,7 @@ import numpy as np
 
 from .mask_simvp import MaskSimVP
 from .vis_utils import show_gif 
-from .simvp_dataset import DLDataset 
+from .simvp_dataset import DLDataset, ValMetricDLDataset
 
 # %% ../nbs/04_scheduled_sampling_trainer.ipynb 3
 def inv_sigmoid_schedule(x, n, k):
@@ -44,7 +44,8 @@ class MaskSimVPScheduledSamplingModule(pl.LightningModule):
             pre_seq_len=pre_seq_len, aft_seq_len=aft_seq_len
         )
         self.train_set = DLDataset(data_root, "train", unlabeled=unlabeled, use_gt_data=use_gt_data, pre_seq_len=pre_seq_len, aft_seq_len=max_sample_steps+1)
-        self.val_set = DLDataset(data_root, "val", use_gt_data=use_gt_data, pre_seq_len=11, aft_seq_len=11)
+        self.val_set = ValMetricDLDataset(data_root)
+        
         self.criterion = torch.nn.CrossEntropyLoss()
         self.iou_metric = JaccardIndex(task='multiclass', num_classes=49)
         
