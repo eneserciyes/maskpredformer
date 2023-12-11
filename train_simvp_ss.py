@@ -39,7 +39,6 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--lr", type=float, default=1e-4)
 
-
     # Hyperparameters for the model
     parser.add_argument(
         "--simvp_path",
@@ -65,7 +64,7 @@ if __name__ == "__main__":
         default=1.05,
         help="hyperparameter for inverse sigmoid schedule for sampling prob",
     )
-    parser.add_argument("--scheduler_type", type=str, default="exponential")
+    parser.add_argument("--schedule_type", type=str, default="exponential")
     parser.add_argument("--unlabeled", action="store_true")
     parser.add_argument("--max_epochs", type=int, default=10)
     parser.add_argument("--use_gt_data", action="store_true")
@@ -89,7 +88,7 @@ if __name__ == "__main__":
     ss_params["lr"] = args.lr
     ss_params["max_epochs"] = args.max_epochs
     ss_params["use_gt_data"] = args.use_gt_data
-    ss_params["scheduler_type"] = args.scheduler_type
+    ss_params["schedule_type"] = args.schedule_type
 
     module = MaskSimVPScheduledSamplingModule(**ss_params)
     module.load_state_dict(mask_sim_vp_ckpt["state_dict"])
