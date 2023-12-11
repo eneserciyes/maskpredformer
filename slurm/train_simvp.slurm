@@ -30,5 +30,5 @@ singularity exec --nv \
 source /ext3/env.sh; python3 train_simvp.py --unlabeled \
 --downsample --in_shape 11 49 160 240 --lr 1e-3 --pre_seq_len=11 --aft_seq_len=1 \
 --max_epochs 20 --devices 4 --batch_size 4 \
---check_val_every_n_epoch=1 --strategy ddp_find_unused_parameters_true
+--val_check_interval 0.5 --strategy ddp_find_unused_parameters_true
 "
