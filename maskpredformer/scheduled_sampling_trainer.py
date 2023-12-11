@@ -12,15 +12,16 @@ from torchmetrics import JaccardIndex
 
 import matplotlib.pyplot as plt
 import wandb
+import math
 import random
 
-from .mask_simvp import MaskSimVP, DEFAULT_MODEL_CONFIG
-from .vis_utils import show_gif
-from .simvp_dataset import DLDataset, DEFAULT_DATA_PATH
+from .mask_simvp import MaskSimVP
+from .vis_utils import show_gif, show_video_line
+from .simvp_dataset import DLDataset 
 
 # %% ../nbs/04_scheduled_sampling_trainer.ipynb 3
 def inv_sigmoid_schedule(x, n, k):
-    y = k / (k+torch.exp(((x-(n//2))/(n//20))/k))
+    y = k / (k+math.exp(((x-(n//2))/(n//20))/k))
     return y
 
 # %% ../nbs/04_scheduled_sampling_trainer.ipynb 4
@@ -47,7 +48,7 @@ class MaskSimVPScheduledSamplingModule(pl.LightningModule):
         self.schedule_max = len(self.train_dataloader()) * sample_step_inc_every_n_epoch
 
     def sample_or_not(self):
-        assert schedule_idx < self.schedule_max, "Schedule idx larger than max, something wrong with schedule"
+        assert self.schedule_idx < self.schedule_max, "Schedule idx larger than max, something wrong with schedule"
 
         p = 1 - inv_sigmoid_schedule(self.schedule_idx, self.schedule_max, self.hparams.schedule_k)
         self.schedule_idx += 1
@@ -78,10 +79,10 @@ class MaskSimVPScheduledSamplingModule(pl.LightningModule):
         x, y = batch
         if self.sample_or_not():
             x = self.sample_autoregressive(x, self.sample_steps)
-            y = y[:, self.sample_steps] # get the next label after sampling model `sample_steps` times
+            y = y[:, self.sample_steps:self.sample_steps+1] # get the next label after sampling model `sample_steps` times
         else:
             # no change in x
-            y = y[:, 0] # get the normal training label
+            y = y[:, 0:1] # get the normal training label
         
         y_hat_logits = self.model(x)
         
