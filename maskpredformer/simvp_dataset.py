@@ -15,8 +15,12 @@ DEFAULT_DATA_PATH = "/home/enes/dev/maskpredformer/data/DL"
 
 # %% ../nbs/01_simvp_dataset.ipynb 4
 class DLDataset(Dataset):
-    def __init__(self, root, mode, unlabeled=False, pre_seq_len=11, aft_seq_len=11, ep_len=22):
-        self.mask_path = os.path.join(root, f"{mode}_masks.pt")
+    def __init__(self, root, mode, unlabeled=False, use_gt_data=False, pre_seq_len=11, aft_seq_len=11, ep_len=22):
+        if use_gt_data:
+            self.mask_path = os.path.join(root, f"{mode}_gt_masks.pt")
+        else:
+            self.mask_path = os.path.join(root, f"{mode}_masks.pt")
+            
         self.mode = mode
         print("INFO: Loading masks from", self.mask_path)
         if unlabeled:
