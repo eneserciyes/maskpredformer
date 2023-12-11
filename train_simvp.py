@@ -70,7 +70,9 @@ if __name__ == "__main__":
         max_epochs=args.max_epochs,
         unlabeled=args.unlabeled,
         downsample=args.downsample,
-        drop_path=args.drop_path
+        drop_path=args.drop_path,
+        pre_seq_len=args.pre_seq_len,
+        aft_seq_len=args.aft_seq_len
     )
     hparams = module.hparams.copy()
     del hparams["data_root"]
