@@ -5,6 +5,7 @@ data_prepared
 mask-predformer/
 wandb/
 __pycache__/
+*.egg-info/
 # FILES
 *.npy
 *.pt

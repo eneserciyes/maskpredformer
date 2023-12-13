@@ -71,5 +71,5 @@ singularity exec $nv \
 	    --overlay /scratch/me2646/maskpredformer.ext3:ro \
 /share/apps/images/cuda11.7.99-cudnn8.5-devel-ubuntu22.04.2.sif \
 /bin/bash -c "
-source /ext/env.sh; jupyter notebook --no-browser --port $port --notebook-dir=$(pwd)
+source /ext3/env.sh; jupyter-lab --no-browser --port $port --notebook-dir=$(pwd)
 "

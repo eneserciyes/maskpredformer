@@ -17,15 +17,19 @@
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=24
 
-#SBATCH --time=12:00:00
-#SBATCH --output=logs/train_predictor_4gpu_%j.out
-#SBATCH --exclusive
+#SBATCH --time=02:00:00
+#SBATCH --output=logs/train_simvp_ar_%j.out
 #SBATCH --requeue
+#SBATCH --signal=SIGUSR1@90
+#SBATCH --mail-user=me2646@nyu.edu
+#SBATCH --mail-type=ALL
 
 singularity exec --nv \
 	    --bind /scratch \
 	    --overlay /scratch/me2646/maskpredformer.ext3:ro \
 /share/apps/images/cuda11.7.99-cudnn8.5-devel-ubuntu22.04.2.sif \
 /bin/bash -c "
-source /ext/env.sh; python3 train_predictor.py
+source /ext3/env.sh; python3 train_simvp_ar.py --unlabeled \
+--max_epochs 10 --val_check_interval 0.5 \
+--devices 4 --strategy ddp_find_unused_parameters_true
 "
