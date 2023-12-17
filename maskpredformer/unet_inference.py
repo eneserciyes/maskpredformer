@@ -3,7 +3,7 @@
 # %% auto 0
 __all__ = ['device', 'DEFAULT_TRANSFORM', 'WenmaSet', 'get_inference']
 
-# %% ../nbs/97_get_unet_predictions.ipynb 3
+# %% ../nbs/97_get_unet_predictions.ipynb 2
 import torch 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,10 +15,10 @@ import matplotlib.pyplot as plt
 import torch
 
 
-# %% ../nbs/97_get_unet_predictions.ipynb 5
+# %% ../nbs/97_get_unet_predictions.ipynb 3
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# %% ../nbs/97_get_unet_predictions.ipynb 6
+# %% ../nbs/97_get_unet_predictions.ipynb 4
 class WenmaSet(Dataset):
     def __init__(self, data_path, data_type, transform=None):
         self.data_path = data_path
@@ -79,7 +79,7 @@ class WenmaSet(Dataset):
     def __len__(self):
         return len(os.listdir(self.data_path))
 
-# %% ../nbs/97_get_unet_predictions.ipynb 7
+# %% ../nbs/97_get_unet_predictions.ipynb 5
 DEFAULT_TRANSFORM = transforms.Compose([
     transforms.ToTensor(),           
     transforms.Resize((160, 240)),          
@@ -87,13 +87,13 @@ DEFAULT_TRANSFORM = transforms.Compose([
            
 ])
 
-# %% ../nbs/97_get_unet_predictions.ipynb 8
+# %% ../nbs/97_get_unet_predictions.ipynb 6
 @torch.no_grad()
 def get_inference(model, image):
     """
-    This function expects image to be a tensor of shape (1, 3, 160, 240)
+    This function expects image to be a tensor of shape (B, 3, 160, 240)
     Also, it should be transformed using the DEFAULT_TRANSFORM.
     """
     model.eval()
     pred = model(image)
-    return torch.argmax(pred, dim=1).detach().cpu()
+    return torch.argmax(pred, dim=1).cpu()
