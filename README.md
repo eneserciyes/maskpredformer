@@ -6,13 +6,12 @@ Placed 2nd out of 38 teams in NYU Deep Learning final project in Fall 2023.
 
 0. Place the data (or symlink) it to `data/Dataset_Student`. This directory should contain `train`, `val` and `unlabeled` folders.
 
-1. The first step is to train a UNet with these data.
-#TODO: talk about UNet training
+1. The first step is to train a UNet with these data: `python3 train_unet.py`. This will save the model in `checkpoints/unet9.pt`.
 
 2. Now, we can generate masks from the data.
 
-- To generate masks for any split, run `python generate_masks.py --model_checkpoint <path_to_checkpoint> --data_root <data_root> --split <split_name> --output_file <output_file>`
-- For training on the labeled data only, you can run for `train` and `val` splits.
+- To generate masks for any split, run `python generate_masks.py --model_checkpoint <path_to_unet> --data_root <data_root> --split <split_name> --output_file <output_file>`
+- For training the world model on the labeled data only, you can run for `train` and `val` splits.
 
 3. Now, we can train our prediction model on the generated masks.
 
