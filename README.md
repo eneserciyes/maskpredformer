@@ -10,8 +10,18 @@ Placed 2nd out of 38 teams in NYU Deep Learning final project in Fall 2023.
 
 2. Now, we can generate masks from the data.
 
-- To generate masks for any split, run `python generate_masks.py --model_checkpoint <path_to_unet> --data_root <data_root> --split <split_name> --output_file <output_file>`
+- To generate masks for train and val splits, run 
+`python generate_masks.py --model_checkpoint checkpoints/unet9.pt --data_root data/Dataset_Student --split <train, val> --output_file <data/DL/train_masks.pt, data/DL/val_masks.pt>`
 - For training the world model on the labeled data only, you can run for `train` and `val` splits.
+
+- For this step, we also need to merge all ground truth masks into one file. To do this, run 
+`python merge_masks.py --data_root data/Dataset_Student --split <train, val> --output_file <data/DL/train_gt_masks.pt, data/DL/val_gt_masks.pt>` for `train` and `val` splits.
+
+Or, you can get the pre-generated masks from here (this link requires an NYU account):
+| Split | Link |
+| ------------- | ------------- |
+| Train  | [Link](https://drive.google.com/file/d/1T3tFfziIjQhSiwSEaJJQSx11x6MOJmla/view?usp=sharing)  |
+| Validation  | [Link](https://drive.google.com/file/d/1FGxuEG-IZdVe3dDPE1AKj0BYn4ys3g_t/view?usp=sharing) |
 
 3. Now, we can train our prediction model on the generated masks.
 
@@ -24,4 +34,15 @@ Placed 2nd out of 38 teams in NYU Deep Learning final project in Fall 2023.
 
 `python3 train_simvp_ss.py --simvp_path checkpoints/simvp_epoch=16-val_loss=0.014.ckpt --sample_step_inc_every_n_epoch 20 --max_epochs 100 --batch_size 4 --check_val_every_n_epoch 2`
 
-We used the checkpoint after second epoch of scheduled sampling for our final submission.
+We used the checkpoint after second epoch of scheduled sampling for our final submission. The checkpoint is [here]().
+
+**Checkpoints**
+| Name | Link |
+| ------------- | ------------- |
+| Best w/o scheduled sampling  | Content Cell  |
+| Best after  | Content Cell  |
+
+
+5. To generate predictions on the hidden set, run this notebook: `nbs/96_get_results_combined_with_unet.ipynb`
+
+The final predictions are [here]().

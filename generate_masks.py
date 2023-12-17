@@ -45,7 +45,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--data_root", type=str, default="data/Dataset_Student")
     parser.add_argument("--split", type=str, default="train")
-    parser.add_argument("--output_file", type=str, default="data/DL/train_masks_new.pt")
+    parser.add_argument("--output_file", type=str, default="data/DL/train_masks.pt")
 
     args = parser.parse_args()
 
