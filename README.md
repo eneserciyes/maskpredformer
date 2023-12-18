@@ -34,15 +34,15 @@ Or, you can get the pre-generated masks from here (this link requires an NYU acc
 
 `python3 train_simvp_ss.py --simvp_path checkpoints/simvp_epoch=16-val_loss=0.014.ckpt --sample_step_inc_every_n_epoch 20 --max_epochs 100 --batch_size 4 --check_val_every_n_epoch 2`
 
-We used the checkpoint after second epoch of scheduled sampling for our final submission. The checkpoint is [here]().
+We used the checkpoint after second epoch of scheduled sampling for our final submission. The checkpoints are here:
 
 **Checkpoints**
 | Name | Link |
 | ------------- | ------------- |
-| Best w/o scheduled sampling  | Content Cell  |
-| Best after  | Content Cell  |
+| Best w/o scheduled sampling  | [Link](https://drive.google.com/file/d/1RpfAS9w553nD3H6gdQKEvNRoK0IiqSKz/view?usp=sharing)  |
+| Best after  | [Link](https://drive.google.com/file/d/1Gqd8eBK-0JRXhStSZr__vGgfhY_3KXDb/view?usp=sharing)  |
 
 
 5. To generate predictions on the hidden set, run this notebook: `nbs/96_get_results_combined_with_unet.ipynb`
 
-The final predictions are [here]().
+The final predictions are [here](https://drive.google.com/file/d/1uUaAZlHKhOSbLRuy9wwdOfQEIqp8zrkL/view?usp=sharing).
