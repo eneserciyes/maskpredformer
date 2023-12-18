@@ -4,6 +4,48 @@ Placed 2nd out of 38 teams in NYU Deep Learning final project in Fall 2023.
 
 ## Instructions
 
+### Setup
+
+1. Installing pip packages
+
+The following packages are required to run the code. Training and inference is done on `Ubuntu 22.04` machines using `Python 3.10.12`. This setup should work on any Linux machine with recent versions of Python.
+
+```
+torch==2.1.1
+torchvision==0.16.1
+pytorch-lightning==2.1.2
+numpy==1.26.1
+tqdm
+matplotlib==3.8.2
+wandb==0.16.0
+imageio==2.33.0
+```
+2. Installing OpenSTL
+
+We use OpenSTL for the implementation of SimVP. To install OpenSTL, run the following commands:
+
+- In a suitable directory, clone the OpenSTL repository:
+```
+git clone git@github.com:chengtan9907/OpenSTL.git
+```
+- Install OpenSTL:
+```
+cd <path_to_OpenSTL>
+pip install -e .
+```
+
+3. Wandb setup
+
+We use wandb for logging. To setup wandb, run the following commands:
+
+```
+wandb login
+```
+
+Now, you can start training the models.
+
+### Training and Inference
+
 0. Place the data (or symlink) it to `data/Dataset_Student`. This directory should contain `train`, `val` and `unlabeled` folders.
 
 1. The first step is to train a UNet with these data: `python3 train_unet.py`. This will save the model in `checkpoints/unet9.pt`.
